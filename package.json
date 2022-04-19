@@ -1,6 +1,6 @@
 {
   "name": "static-import-to-require",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "transfer static import statement to require statement",
   "main": "static-import-to-require.js",
   "scripts": {
@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/adf0001/static-import-to-require#readme",
   "dependencies": {
-    "acorn": "^8.7.0",
-    "falafel": "^2.2.4"
+    "falafel": ">=2.0.0"
   }
 }
