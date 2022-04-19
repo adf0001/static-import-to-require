@@ -1,0 +1,28 @@
+{
+  "name": "static-import-to-require",
+  "version": "0.1.0",
+  "description": "transfer static import statement to require statement",
+  "main": "static-import-to-require.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "import",
+    "require",
+    "transfer"
+  ],
+  "author": "fwg",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adf0001/static-import-to-require.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adf0001/static-import-to-require/issues"
+  },
+  "homepage": "https://github.com/adf0001/static-import-to-require#readme",
+  "dependencies": {
+    "acorn": "^8.7.0",
+    "falafel": "^2.2.4"
+  }
+}
