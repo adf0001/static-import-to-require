@@ -4,10 +4,22 @@ static_import_to_require = require("../static-import-to-require.js");
 
 module.exports = {
 
-	"default": function (done) {
+	"transfer()": function (done) {
 		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
 
 		function cmp(source, expect) {
+			/*
+			function transfer(source, options)
+				options:
+					.debugInfo
+						show debug information
+					.sourceComment
+						add source comment
+					.defaultKey
+						default is empty, and the default export is same as name-space export, such as in node.js;
+						it can be appointed a string key,
+							such as "default" like that in babel, then the default export is `require("module").default`;
+			*/
 			var s = static_import_to_require(source).toString();
 			if (s === expect) return true;
 			console.error("compare fail, source: " + source);
@@ -81,6 +93,36 @@ module.exports = {
 		));
 	},
 
+	"options.defaultKey": function (done) {
+		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
+
+		function cmp(source, expect) {
+			var s = static_import_to_require(source, { defaultKey: "default" }).toString();
+			if (s === expect) return true;
+			console.error("compare fail, source: " + source);
+			console.log("expect: " + expect);
+			console.log("result: " + s);
+			return false;
+		}
+
+		done(!(
+			cmp('import def111 from "module-name";',
+				'var def111= require("module-name").default;') &&
+
+			cmp('import defaultExport, { export1c, export2c } from "module-name";',
+				'var module_name= require("module-name"),\n' +
+				'	defaultExport= module_name.default,\n' +
+				'	export1c= module_name.export1c,\n' +
+				'	export2c= module_name.export2c;') &&
+
+			cmp('import defaultExport2,*as name2 from "module-name";',
+				'var name2= require("module-name"),\n' +
+				'	defaultExport2= name2.default;') &&
+
+			true
+		));
+	},
+
 	"options.sourceComment": function (done) {
 		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
 
@@ -110,18 +152,18 @@ module.exports = {
 				'var def111= require("module-name");	//comment as splitter') &&
 
 
-			 cmp(' import defaultExport3 from "module-name"; import defaultExport4 from "module-name2"; //multiple statement in 1 line',
-			 	' '+
-				 '\n//import defaultExport3 from "module-name";\n'+
-				 'var defaultExport3= require("module-name"); '+
-				 '\n//import defaultExport4 from "module-name2";\n'+
-				 'var defaultExport4= require("module-name2"); //multiple statement in 1 line') &&
+			cmp(' import defaultExport3 from "module-name"; import defaultExport4 from "module-name2"; //multiple statement in 1 line',
+				' ' +
+				'\n//import defaultExport3 from "module-name";\n' +
+				'var defaultExport3= require("module-name"); ' +
+				'\n//import defaultExport4 from "module-name2";\n' +
+				'var defaultExport4= require("module-name2"); //multiple statement in 1 line') &&
 
 
 			cmp('import defaultExport5\n' +
 				'	from/*mmm*/\n' +
 				'	"module-name";  //single import statement in multiple lines',
-				'\n//import defaultExport5\\n 	from/*mmm*/\\n 	"module-name";\n'+
+				'\n//import defaultExport5\\n 	from/*mmm*/\\n 	"module-name";\n' +
 				'var defaultExport5= require("module-name");  //single import statement in multiple lines') &&
 
 			true

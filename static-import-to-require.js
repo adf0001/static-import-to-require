@@ -95,23 +95,39 @@ function transferSource(source, options) {
 						"require(" + p1 + ");";
 				});
 		default:	//import defaultExport (,* as \w+)? (,{...})? from "module-name";
+			var defaultKey = options && options.defaultKey;
+
 			return s.replace(/^([^\s,]+)(\s*,\s*\*\s*as\s+[^\s,]+)?(\s*,\s*\{[^\}]*\})?\s*from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
 				function (m, p1, p2, p3, p4) {
 
 					if (!p2 && !p3) {
 						//ImportedDefaultBinding
 						return formatSourceComment(source, options) +
-							"var " + p1 + "= require(" + p4 + ");";
+							"var " + p1 + "= require(" + p4 + ")" + (defaultKey ? ("." + defaultKey) : "") + ";";
 					}
 					else if (!p3) {
 						//ImportedDefaultBinding,NameSpaceImport
-						return formatSourceComment(source, options) +
-							"var " + p1 + "= require(" + p4 + "),\n\t" + p2.match(/\S+$/)[0] + "= " + p1 + ";";
+						var nm = p2.match(/\S+$/)[0];
+
+						if (defaultKey) {
+							return formatSourceComment(source, options) +
+								"var " + nm + "= require(" + p4 + "),\n\t" + p1 + "= " + nm + "." + defaultKey + ";";
+						}
+						else {
+							return formatSourceComment(source, options) +
+								"var " + p1 + "= require(" + p4 + "),\n\t" + nm + "= " + p1 + ";";
+						}
 					}
 					else if (!p2) {
 						//ImportedDefaultBinding,NamedImports
-						return formatSourceComment(source, options) +
-							"var " + p1 + "= require(" + p4 + "),\n\t" + formatNamedImports(p3, p1) + ";";
+						if (defaultKey) {
+							return formatSourceComment(source, options) +
+								"var " + formatNamedImports("{" + defaultKey + " as " + p1 + ", " + p3.replace(/^[\s\{,]+/, ""), null, p4) + ";";
+						}
+						else {
+							return formatSourceComment(source, options) +
+								"var " + p1 + "= require(" + p4 + "),\n\t" + formatNamedImports(p3, p1) + ";";
+						}
 					}
 					else return m;	//unknown
 				});
@@ -127,6 +143,10 @@ options:
 		show debug information
 	.sourceComment
 		add source comment
+	.defaultKey
+		default is empty, and the default export is same as name-space export, such as in node.js;
+		it can be appointed a string key,
+			such as "default" like that in babel, then the default export is `require("module").default`;
 */
 function transfer(source, options) {
 	if (!regImport.test(source)) return source;		//check keyword 'import' before calling falafel
