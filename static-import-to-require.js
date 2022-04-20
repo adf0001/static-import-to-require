@@ -4,10 +4,11 @@
 var acorn = require('acorn');
 var falafel = require('falafel');
 
-function formatNamedImports(s, spaceName, moduleName) {
+function formatNamedImports(namedPartial, spaceName, moduleName, options) {
 	var sn = spaceName || moduleName.slice(1, -1).replace(/\W/g, "_");
+	var splitter = (options && options.singleLine) ? ", " : ",\n\t";
 
-	var sa = s.replace(/(^[\s\{,]+|[\s\},]+$)/g, "").split(",");
+	var sa = namedPartial.replace(/(^[\s\{,]+|[\s\},]+$)/g, "").split(",");
 	var i, imax = sa.length, si, mr, a = [];
 	for (i = 0; i < imax; i++) {
 		si = sa[i];
@@ -20,7 +21,7 @@ function formatNamedImports(s, spaceName, moduleName) {
 
 	if (!a.length) return "";
 
-	if (spaceName) return a.join(",\n\t");	//spaceName already exists
+	if (spaceName) return a.join(splitter);	//spaceName already exists
 
 	if (a.length === 1 && !spaceName) {
 		//only 1 item, rebuild single line.
@@ -28,7 +29,7 @@ function formatNamedImports(s, spaceName, moduleName) {
 		else return mr[1] + "= require(" + moduleName + ")." + mr[1];
 	}
 
-	return sn + "= require(" + moduleName + "),\n\t" + a.join(",\n\t");
+	return sn + "= require(" + moduleName + ")" + splitter + a.join(splitter);
 }
 
 function formatSourceComment(source, options) {
@@ -85,7 +86,7 @@ function transferSource(source, options) {
 				function (m, p1, p2) {
 					//NamedImports
 					return formatSourceComment(source, options) +
-						"var " + formatNamedImports(p1, null, p2) + ";";
+						"var " + formatNamedImports(p1, null, p2, options) + ";";
 				});
 		case "\"":	//import "module-name";
 			return s.replace(/^([\'\"][^\'\"]+[\'\"])[\s;]*$/,
@@ -96,6 +97,7 @@ function transferSource(source, options) {
 				});
 		default:	//import defaultExport (,* as \w+)? (,{...})? from "module-name";
 			var defaultKey = options && options.defaultKey;
+			var splitter = (options && options.singleLine) ? ", " : ",\n\t";
 
 			return s.replace(/^([^\s,]+)(\s*,\s*\*\s*as\s+[^\s,]+)?(\s*,\s*\{[^\}]*\})?\s*from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
 				function (m, p1, p2, p3, p4) {
@@ -111,22 +113,22 @@ function transferSource(source, options) {
 
 						if (defaultKey) {
 							return formatSourceComment(source, options) +
-								"var " + nm + "= require(" + p4 + "),\n\t" + p1 + "= " + nm + "." + defaultKey + ";";
+								"var " + nm + "= require(" + p4 + ")" + splitter + p1 + "= " + nm + "." + defaultKey + ";";
 						}
 						else {
 							return formatSourceComment(source, options) +
-								"var " + p1 + "= require(" + p4 + "),\n\t" + nm + "= " + p1 + ";";
+								"var " + p1 + "= require(" + p4 + ")" + splitter + nm + "= " + p1 + ";";
 						}
 					}
 					else if (!p2) {
 						//ImportedDefaultBinding,NamedImports
 						if (defaultKey) {
 							return formatSourceComment(source, options) +
-								"var " + formatNamedImports("{" + defaultKey + " as " + p1 + ", " + p3.replace(/^[\s\{,]+/, ""), null, p4) + ";";
+								"var " + formatNamedImports("{" + defaultKey + " as " + p1 + ", " + p3.replace(/^[\s\{,]+/, ""), null, p4, options) + ";";
 						}
 						else {
 							return formatSourceComment(source, options) +
-								"var " + p1 + "= require(" + p4 + "),\n\t" + formatNamedImports(p3, p1) + ";";
+								"var " + p1 + "= require(" + p4 + ")" + splitter + formatNamedImports(p3, p1, null, options) + ";";
 						}
 					}
 					else return m;	//unknown
@@ -147,6 +149,8 @@ options:
 		default is empty, and the default export is same as name-space export, such as in node.js;
 		it can be appointed a string key,
 			such as "default" like that in babel, then the default export is `require("module").default`;
+	.singleLine
+		if set true, format multiple named-imports in single line;
 */
 function transfer(source, options) {
 	if (!regImport.test(source)) return source;		//check keyword 'import' before calling falafel

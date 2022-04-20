@@ -43,6 +43,8 @@ function cmp(source, expect) {
 				default is empty, and the default export is same as name-space export, such as in node.js;
 				it can be appointed a string key,
 					such as "default" like that in babel, then the default export is `require("module").default`;
+			.singleLine
+				if set true, format multiple named-imports in single line;
 	*/
 	var s = static_import_to_require(source, { sourceComment: false }).toString();
 

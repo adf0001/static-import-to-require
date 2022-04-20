@@ -1,6 +1,6 @@
 {
   "name": "static-import-to-require",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "transfer static import statement to require statement",
   "main": "static-import-to-require.js",
   "scripts": {
