@@ -240,11 +240,19 @@ module.exports = {
 	},
 
 	"sample files & options": function (done) {
-		if (typeof window !== "undefined") throw "disable for browser";
-		var fs = require("fs");
+		//if (typeof window !== "undefined") throw "disable for browser";
 
-		var fn = __dirname + "/sample/sample.js";
-		var txt = fs.readFileSync(fn);
+		var fn = __dirname + "/sample/sample.js", txt;
+		try {
+			var fs = require("fs");
+			txt = fs.readFileSync(fn);
+		}
+		catch (ex) {
+			var request = new XMLHttpRequest();
+			request.open('GET', 'sample/sample.js', false);
+			request.send(null);
+			if (request.status === 200) txt = request.responseText;
+		}
 
 		console.log("---------------------------");
 		console.log(static_import_to_require(txt, { debugInfo: true, sourceComment: true }));
