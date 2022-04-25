@@ -139,6 +139,34 @@ function transferSource(source, options) {
 var regImport = /\bimport\b/;
 var falafelOptions = { sourceType: 'module', ecmaVersion: ECMA_VERSION };
 
+//return boolean
+var fastCheck = function (source) {
+	return regImport.test(source);
+}
+
+//return callback object { node: function(node), final: function(result) }
+var falafelCallback = function (source, options) {
+	return {
+		node: function (node) {
+			if (node.type === 'ImportDeclaration') {
+				//console.log(node);
+
+				var itemSource = node.source();
+
+				if (options && options.debugInfo) { console.log("match line: " + itemSource); }
+
+				//console.log("clear: "+removeComment(node.source()));
+				var newSource = transferSource(itemSource, options);
+
+				if (newSource && itemSource !== newSource) {
+					//console.log("new  : "+newSource);
+					node.update(newSource);
+				}
+			}
+		}
+	}
+}
+
 /*
 options:
 	.debugInfo
@@ -153,30 +181,20 @@ options:
 		if set true, format multiple named-imports in single line;
 */
 function transfer(source, options) {
-	if (!regImport.test(source)) return source;		//check keyword 'import' before calling falafel
+	if (!fastCheck(source)) return source;
 
-	return falafel(source, falafelOptions,
-		function (node) {
-			if (node.type === 'ImportDeclaration') {
-				//console.log(node);
+	var cbo = falafelCallback(source, options);
 
-				var source = node.source();
+	var resultSource = falafel(source, falafelOptions, cbo.node);
 
-				if (options && options.debugInfo) { console.log("match line: " + source); }
+	if (cbo.final) resultSource = cbo.final(resultSource);
 
-				//console.log("clear: "+removeComment(node.source()));
-				var newSource = transferSource(source, options);
-
-				if (newSource && source !== newSource) {
-					//console.log("new  : "+newSource);
-					node.update(newSource);
-				}
-			}
-		}
-	);
+	return resultSource;
 }
-
 
 //module
 
-module.exports = transfer;
+module.exports = exports = transfer;
+
+exports.fastCheck = fastCheck;
+exports.falafelCallback = falafelCallback;

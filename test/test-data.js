@@ -1,6 +1,7 @@
 
 //global variable, for html page, refer tpsvr @ npm.
 static_import_to_require = require("../static-import-to-require.js");
+falafel = require('falafel');
 
 module.exports = {
 
@@ -239,7 +240,7 @@ module.exports = {
 		));
 	},
 
-	"sample files & options": function (done) {
+	"sample file & options": function (done) {
 		//if (typeof window !== "undefined") throw "disable for browser";
 
 		var fn = __dirname + "/sample/sample.js", txt;
@@ -260,10 +261,44 @@ module.exports = {
 		done(false);
 	},
 
+	"sample file / falafel callback": function (done) {
+		//if (typeof window !== "undefined") throw "disable for browser";
+
+		var fn = __dirname + "/sample/sample.js", txt;
+		try {
+			var fs = require("fs");
+			txt = fs.readFileSync(fn);
+		}
+		catch (ex) {
+			var request = new XMLHttpRequest();
+			request.open('GET', 'sample/sample.js', false);
+			request.send(null);
+			if (request.status === 200) txt = request.responseText;
+		}
+
+		if (static_import_to_require.fastCheck(txt)) {
+			var cbo = static_import_to_require.falafelCallback(txt,
+				{ debugInfo: true, sourceComment: false, defaultKey: "default" });
+
+			console.log("===========================");
+			var rsl = falafel(txt, { sourceType: 'module', ecmaVersion: 99 },
+				function (node) {
+					cbo.node(node);
+				}
+			);
+			if (cbo.final) rsl = cbo.final(rsl);
+
+			console.log("---------------------------");
+			console.log(rsl);
+		}
+
+		done(false);
+	},
+
 };
 
 // for html page
-//if (typeof setHtmlPage === "function") setHtmlPage("title", "10em", 1);	//page setting
+if (typeof setHtmlPage === "function") setHtmlPage(null, "12em");	//page setting
 if (typeof showResult !== "function") showResult = function (text) { console.log(text); }
 
 //for mocha
