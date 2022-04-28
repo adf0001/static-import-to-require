@@ -40,7 +40,7 @@ module.exports = {
 				'var def111= require("module-name");	//comment') &&
 			cmp(' 	 import def111 from "module-name" 	 //spaces',
 				' 	 var def111= require("module-name"); 	 //spaces') &&
-			cmp('import def111/*ccc*/from "module-name"/*as*/;	//comment as splitter',
+			cmp('import def111/*ccc*/from/*nnn*/"module-name"/*as*/;	//comment as splitter',
 				'var def111= require("module-name");	//comment as splitter') &&
 			cmp("import def111 from 'module-name';	//quotation mark",
 				"var def111= require('module-name');	//quotation mark") &&
@@ -56,17 +56,17 @@ module.exports = {
 				'var alias1= require("module-name").export1;') &&
 
 			cmp('import { export1a , export2a } from "module-name";',
-				'var module_name= require("module-name"),\n' +
-				'	export1a= module_name.export1a,\n' +
-				'	export2a= module_name.export2a;') &&
+				'var _import_1_= require("module-name"),\n' +
+				'	export1a= _import_1_.export1a,\n' +
+				'	export2a= _import_1_.export2a;') &&
 			cmp('import {export1b, export2b as alias2 } from "module-name";',
-				'var module_name= require("module-name"),\n' +
-				'	export1b= module_name.export1b,\n' +
-				'	alias2= module_name.export2b;') &&
+				'var _import_1_= require("module-name"),\n' +
+				'	export1b= _import_1_.export1b,\n' +
+				'	alias2= _import_1_.export2b;') &&
 			cmp('import{export1cc,export2b as alias2b}from"module-name";  //special spaces',
-				'var module_name= require("module-name"),\n' +
-				'	export1cc= module_name.export1cc,\n' +
-				'	alias2b= module_name.export2b;  //special spaces') &&
+				'var _import_1_= require("module-name"),\n' +
+				'	export1cc= _import_1_.export1cc,\n' +
+				'	alias2b= _import_1_.export2b;  //special spaces') &&
 
 			cmp('import defaultExport, { export1c, export2c } from "module-name";',
 				'var defaultExport= require("module-name"),\n' +
@@ -115,10 +115,10 @@ module.exports = {
 				'var def111= require("module-name").default;') &&
 
 			cmp('import defaultExport, { export1c, export2c } from "module-name";',
-				'var module_name= require("module-name"),\n' +
-				'	defaultExport= module_name.default,\n' +
-				'	export1c= module_name.export1c,\n' +
-				'	export2c= module_name.export2c;') &&
+				'var _import_1_= require("module-name"),\n' +
+				'	defaultExport= _import_1_.default,\n' +
+				'	export1c= _import_1_.export1c,\n' +
+				'	export2c= _import_1_.export2c;') &&
 
 			cmp('import defaultExport2,*as name2 from "module-name";',
 				'var name2= require("module-name"),\n' +
@@ -156,7 +156,6 @@ module.exports = {
 				'//import def111/*ccc*/from "module-name"/*as*/;\n' +
 				'var def111= require("module-name");	//comment as splitter') &&
 
-
 			cmp(' import defaultExport3 from "module-name"; import defaultExport4 from "module-name2"; //multiple statement in 1 line',
 				' ' +
 				'\n//import defaultExport3 from "module-name";\n' +
@@ -164,12 +163,40 @@ module.exports = {
 				'\n//import defaultExport4 from "module-name2";\n' +
 				'var defaultExport4= require("module-name2"); //multiple statement in 1 line') &&
 
+			cmp('import defaultExport2,*as name2 from "module-name";',
+				'//import defaultExport2,*as name2 from "module-name";\n' +
+				'var defaultExport2= require("module-name"),\n' +
+				'	name2= defaultExport2;') &&
+
+			cmp('import * as name from "module-name";',
+				'//import * as name from "module-name";\n' +
+				'var name= require("module-name");') &&
+
+			cmp('import defaultExport, { export1c, export2c } from "module-name";',
+				'//import defaultExport, { export1c, export2c } from "module-name";\n' +
+				'var defaultExport= require("module-name"),\n' +
+				'	export1c= defaultExport.export1c,\n' +
+				'	export2c= defaultExport.export2c;') &&
 
 			cmp('import defaultExport5\n' +
 				'	from/*mmm*/\n' +
 				'	"module-name";  //single import statement in multiple lines',
 				'//import defaultExport5\\n 	from/*mmm*/\\n 	"module-name";\n' +
 				'var defaultExport5= require("module-name");  //single import statement in multiple lines') &&
+
+			cmp('import "module-name";',
+				'//import "module-name";\n' +
+				'require("module-name");') &&
+
+			cmp('import { export1 as alias1 } from "module-name";',
+				'//import { export1 as alias1 } from "module-name";\n' +
+				'var alias1= require("module-name").export1;') &&
+
+			cmp('import { export1a , export2a } from "module-name";',
+				'//import { export1a , export2a } from "module-name";\n' +
+				'var _import_1_= require("module-name"),\n' +
+				'	export1a= _import_1_.export1a,\n' +
+				'	export2a= _import_1_.export2a;') &&
 
 			true
 		));
@@ -210,11 +237,11 @@ module.exports = {
 				'var alias1= require("module-name").export1;') &&
 
 			cmp('import { export1a , export2a } from "module-name";',
-				'var module_name= require("module-name"), export1a= module_name.export1a, export2a= module_name.export2a;') &&
+				'var _import_1_= require("module-name"), export1a= _import_1_.export1a, export2a= _import_1_.export2a;') &&
 			cmp('import {export1b, export2b as alias2 } from "module-name";',
-				'var module_name= require("module-name"), export1b= module_name.export1b, alias2= module_name.export2b;') &&
+				'var _import_1_= require("module-name"), export1b= _import_1_.export1b, alias2= _import_1_.export2b;') &&
 			cmp('import{export1cc,export2b as alias2b}from"module-name";  //special spaces',
-				'var module_name= require("module-name"), export1cc= module_name.export1cc, alias2b= module_name.export2b;  //special spaces') &&
+				'var _import_1_= require("module-name"), export1cc= _import_1_.export1cc, alias2b= _import_1_.export2b;  //special spaces') &&
 
 			cmp('import defaultExport, { export1c, export2c } from "module-name";',
 				'var defaultExport= require("module-name"), export1c= defaultExport.export1c, export2c= defaultExport.export2c;') &&

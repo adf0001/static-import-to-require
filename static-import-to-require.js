@@ -4,32 +4,31 @@
 var acorn = require('acorn');
 var falafel = require('falafel');
 
-function formatNamedImports(namedPartial, spaceName, moduleName, options) {
-	var sn = spaceName || moduleName.slice(1, -1).replace(/\W/g, "_");
-	var splitter = (options && options.singleLine) ? ", " : ",\n\t";
+/*
+Accepted format
 
-	var sa = namedPartial.replace(/(^[\s\{,]+|[\s\},]+$)/g, "").split(",");
-	var i, imax = sa.length, si, mr, a = [];
-	for (i = 0; i < imax; i++) {
-		si = sa[i];
-		mr = si.match(/^\s*(\w+)(\s+as\s+\w+)?/);
-		if (!mr) continue;	//may empty
+//refer https://262.ecma-international.org/11.0/#sec-imports
+//refer https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import
 
-		if (mr[2]) a[a.length] = mr[2].match(/\w+$/)[0] + "= " + sn + "." + mr[1];	//alias
-		else a[a.length] = mr[1] + "= " + sn + "." + mr[1];
-	}
+import defaultExport from "module-name";
+import * as name from "module-name";
+import { export1 } from "module-name";
+import { export1 as alias1 } from "module-name";
+import { export1 , export2 } from "module-name";
+import { export1 , export2 as alias2 , [...] } from "module-name";
+import defaultExport, { export1 [ , [...] ] } from "module-name";
+import defaultExport, * as name from "module-name";
+import "module-name";
 
-	if (!a.length) return "";
+*/
 
-	if (spaceName) return a.join(splitter);	//spaceName already exists
+//textSeedObject: { id, text }
+function importVarName(textSeedObject) {
+	if (!textSeedObject.id) textSeedObject.id = 1;
 
-	if (a.length === 1 && !spaceName) {
-		//only 1 item, rebuild single line.
-		if (mr[2]) return mr[2].match(/\w+$/)[0] + "= require(" + moduleName + ")." + mr[1];	//alias
-		else return mr[1] + "= require(" + moduleName + ")." + mr[1];
-	}
-
-	return sn + "= require(" + moduleName + ")" + splitter + a.join(splitter);
+	var sid;
+	while (textSeedObject.text.indexOf(sid = "_import_" + (textSeedObject.id++) + "_") >= 0) { }
+	return sid;
 }
 
 function formatSourceComment(source, options, lineHead) {
@@ -55,91 +54,12 @@ function removeComment(source) {
 	return a.join(" ");		//block comment can be a splitter like a space
 }
 
-/*
-refer https://262.ecma-international.org/11.0/#sec-imports
-
-Syntax
-	ImportDeclaration:
-		import ImportClause FromClause;
-		import ModuleSpecifier;
-	ImportClause:
-		ImportedDefaultBinding
-		NameSpaceImport
-		NamedImports
-		ImportedDefaultBinding,NameSpaceImport
-		ImportedDefaultBinding,NamedImports
-*/
-
-function transferSource(source, options, lineHead) {
-	var s = removeComment(source).replace(/^import\s*/, "");	//remove 'import' and the following spaces
-
-	switch (s.charAt(0)) {
-		case "*":	//import * as name from "module-name";
-			return s.replace(/^\*\s*as\s+(\S+)\s+from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
-				function (m, p1, p2) {
-					//NameSpaceImport
-					return formatSourceComment(source, options, lineHead) +
-						"var " + p1 + "= require(" + p2 + ");";
-				});
-		case "{":	//import { export1 , export2 as alias2  } from "module-name";
-			return s.replace(/^\{([^\}]*)\}\s*from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
-				function (m, p1, p2) {
-					//NamedImports
-					return formatSourceComment(source, options, lineHead) +
-						"var " + formatNamedImports(p1, null, p2, options) + ";";
-				});
-		case "\"":	//import "module-name";
-			return s.replace(/^([\'\"][^\'\"]+[\'\"])[\s;]*$/,
-				function (m, p1) {
-					//import ModuleSpecifier;
-					return formatSourceComment(source, options, lineHead) +
-						"require(" + p1 + ");";
-				});
-		default:	//import defaultExport (,* as \w+)? (,{...})? from "module-name";
-			var defaultKey = options && options.defaultKey;
-			var splitter = (options && options.singleLine) ? ", " : ",\n\t";
-
-			return s.replace(/^([^\s,]+)(\s*,\s*\*\s*as\s+[^\s,]+)?(\s*,\s*\{[^\}]*\})?\s*from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
-				function (m, p1, p2, p3, p4) {
-
-					if (!p2 && !p3) {
-						//ImportedDefaultBinding
-						return formatSourceComment(source, options, lineHead) +
-							"var " + p1 + "= require(" + p4 + ")" + (defaultKey ? ("." + defaultKey) : "") + ";";
-					}
-					else if (!p3) {
-						//ImportedDefaultBinding,NameSpaceImport
-						var nm = p2.match(/\S+$/)[0];
-
-						if (defaultKey) {
-							return formatSourceComment(source, options, lineHead) +
-								"var " + nm + "= require(" + p4 + ")" + splitter + p1 + "= " + nm + "." + defaultKey + ";";
-						}
-						else {
-							return formatSourceComment(source, options, lineHead) +
-								"var " + p1 + "= require(" + p4 + ")" + splitter + nm + "= " + p1 + ";";
-						}
-					}
-					else if (!p2) {
-						//ImportedDefaultBinding,NamedImports
-						if (defaultKey) {
-							return formatSourceComment(source, options, lineHead) +
-								"var " + formatNamedImports("{" + defaultKey + " as " + p1 + ", " + p3.replace(/^[\s\{,]+/, ""), null, p4, options) + ";";
-						}
-						else {
-							return formatSourceComment(source, options, lineHead) +
-								"var " + p1 + "= require(" + p4 + ")" + splitter + formatNamedImports(p3, p1, null, options) + ";";
-						}
-					}
-					else return m;	//unknown
-				});
-	}
-}
-
 var regImport = /\bimport\b/;
 var defaultFalafelOptions = { sourceType: 'module', ecmaVersion: ECMA_VERSION };
 
 var regLineHead = /[\r\n]$/;
+
+var regModuleName = /\b(from|import)\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/;
 
 //return boolean
 var fastCheck = function (source) {
@@ -148,18 +68,109 @@ var fastCheck = function (source) {
 
 //return callback object { node: function(node), final: function(result) }
 var falafelCallback = function (source, options) {
+	var textSeedObject = { text: source };
+
+	var defaultKey = options && options.defaultKey;
+	var splitter = (options && options.singleLine) ? ", " : ",\n\t";
+
 	return {
 		node: function (node) {
 			if (node.type === 'ImportDeclaration') {
 				//console.log(node);
 
 				var itemSource = node.source();
-
 				if (options && options.debugInfo) { console.log("match line: " + itemSource); }
+				var lineHead = node.start ? regLineHead.test(source.slice(node.start - 1, node.start)) : true;
 
-				//console.log("clear: "+removeComment(node.source()));
-				var newSource = transferSource(itemSource, options,
-					node.start ? regLineHead.test(source.slice(node.start - 1, node.start)) : true);
+				var moduleName = removeComment(itemSource).match(regModuleName)[2];
+				var newSource;
+
+				if (node.specifiers && node.specifiers.length > 0) {
+					var varName, i, imax;
+
+					switch (node.specifiers[0].type) {
+						case "ImportDefaultSpecifier":
+
+							imax = node.specifiers.length;
+							if (imax === 1) {
+								//import defaultExport from "module-name";
+
+								newSource = formatSourceComment(itemSource, options, lineHead) +
+									"var " + node.specifiers[0].local.name + "= require(" + moduleName + ")" +
+									(defaultKey ? ("." + defaultKey) : "") + ";";
+							}
+							else {
+
+								if (node.specifiers[1].type === "ImportNamespaceSpecifier") {
+									//import defaultExport, * as name from "module-name";
+
+									varName = node.specifiers[defaultKey ? 1 : 0].local.name;
+									newSource = formatSourceComment(itemSource, options, lineHead) +
+										"var " + varName + "= require(" + moduleName + ")" + splitter +	//1st
+										node.specifiers[defaultKey ? 0 : 1].local.name + "= " +		//2nd
+										varName + (defaultKey ? ("." + defaultKey) : "") + ";";
+								}
+								else {
+									//import defaultExport, { export1 [ , [...] ] } from "module-name";
+
+									varName = defaultKey ? importVarName(textSeedObject) : node.specifiers[0].local.name;
+
+									newSource = formatSourceComment(itemSource, options, lineHead) +
+										"var " + varName + "= require(" + moduleName + ")";
+
+									if (defaultKey)
+										newSource += splitter + node.specifiers[0].local.name + "= " +
+											varName + "." + defaultKey;
+
+									for (i = 1; i < imax; i++) {
+										newSource += splitter + node.specifiers[i].local.name + "= " +
+											varName + "." + node.specifiers[i].imported.name;
+									}
+									newSource += ";";
+								}
+							}
+							break;
+						case "ImportNamespaceSpecifier":
+							//import * as name from "module-name";
+
+							newSource = formatSourceComment(itemSource, options, lineHead) +
+								"var " + node.specifiers[0].local.name + "= require(" + moduleName + ");";
+							break;
+						case "ImportSpecifier":
+							// import { export1 } from "module-name";
+							// import { export1 as alias1 } from "module-name";
+							// import { export1 , export2 } from "module-name";
+							// import { export1 , export2 as alias2 , [...] } from "module-name";
+
+							imax = node.specifiers.length;
+							if (imax == 1) {
+								newSource = formatSourceComment(itemSource, options, lineHead) +
+									"var " + node.specifiers[0].local.name +
+									"= require(" + moduleName + ")." + node.specifiers[0].imported.name + ";";
+							}
+							else {
+								varName = importVarName(textSeedObject);
+								newSource = formatSourceComment(itemSource, options, lineHead) +
+									"var " + varName + "= require(" + moduleName + ")";
+
+								for (i = 0; i < imax; i++) {
+									newSource += splitter + node.specifiers[i].local.name + "= " +
+										varName + "." + node.specifiers[i].imported.name;
+								}
+								newSource += ";";
+							}
+							break;
+						default:
+							return;
+					}
+
+				}
+				else {
+					//import "module-name";
+
+					newSource = formatSourceComment(itemSource, options, lineHead) +
+						"require(" + moduleName + ");";
+				}
 
 				if (newSource && itemSource !== newSource) {
 					//console.log("new  : "+newSource);

@@ -89,19 +89,19 @@ var export1= require("module-name").export1;
 var alias1= require("module-name").export1;
 
 //import { export1a , export2a } from "module-name";
-var module_name= require("module-name"),
-        export1a= module_name.export1a,
-        export2a= module_name.export2a;
+var _import_1_= require("module-name"),
+        export1a= _import_1_.export1a,
+        export2a= _import_1_.export2a;
 
 //import {export1b, export2b as alias2 } from "module-name";
-var module_name= require("module-name"),
-        export1b= module_name.export1b,
-        alias2= module_name.export2b;
+var _import_2_= require("module-name"),
+        export1b= _import_2_.export1b,
+        alias2= _import_2_.export2b;
 
 //import{export1cc,export2b as alias2b}from"module-name";
-var module_name= require("module-name"),
-        export1cc= module_name.export1cc,
-        alias2b= module_name.export2b;  //special spaces
+var _import_3_= require("module-name"),
+        export1cc= _import_3_.export1cc,
+        alias2b= _import_3_.export2b;  //special spaces
 
 //import defaultExport, { export1c, export2c } from "module-name";
 var defaultExport= require("module-name"),
