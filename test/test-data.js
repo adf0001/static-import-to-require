@@ -142,18 +142,18 @@ module.exports = {
 
 		done(!(
 			cmp('import def111 from "module-name";',
-				'\n//import def111 from "module-name";\n' +
+				'//import def111 from "module-name";\n' +
 				'var def111= require("module-name");') &&
 
 			cmp('import def111 from "module-name"	//comment',
-				'\n//import def111 from "module-name"\n' +
+				'//import def111 from "module-name"\n' +
 				'var def111= require("module-name");	//comment') &&
 			cmp(' 	 import def111 from "module-name" 	 //spaces',
 				' 	 ' +
 				'\n//import def111 from "module-name"\n' +
 				'var def111= require("module-name"); 	 //spaces') &&
 			cmp('import def111/*ccc*/from "module-name"/*as*/;	//comment as splitter',
-				'\n//import def111/*ccc*/from "module-name"/*as*/;\n' +
+				'//import def111/*ccc*/from "module-name"/*as*/;\n' +
 				'var def111= require("module-name");	//comment as splitter') &&
 
 
@@ -168,7 +168,7 @@ module.exports = {
 			cmp('import defaultExport5\n' +
 				'	from/*mmm*/\n' +
 				'	"module-name";  //single import statement in multiple lines',
-				'\n//import defaultExport5\\n 	from/*mmm*/\\n 	"module-name";\n' +
+				'//import defaultExport5\\n 	from/*mmm*/\\n 	"module-name";\n' +
 				'var defaultExport5= require("module-name");  //single import statement in multiple lines') &&
 
 			true

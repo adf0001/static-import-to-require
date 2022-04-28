@@ -32,10 +32,10 @@ function formatNamedImports(namedPartial, spaceName, moduleName, options) {
 	return sn + "= require(" + moduleName + ")" + splitter + a.join(splitter);
 }
 
-function formatSourceComment(source, options) {
+function formatSourceComment(source, options, lineHead) {
 	if (!options || !options.sourceComment) return "";
 
-	return "\n//" + source.replace(/[\r\n]+/g, "\\n ") + "\n";
+	return (lineHead ? "" : "\n") + "//" + source.replace(/[\r\n]+/g, "\\n ") + "\n";
 }
 
 var ECMA_VERSION = 99;	//to avoid SyntaxError by dynamic import-calling `import()`, or other future error.
@@ -70,7 +70,7 @@ Syntax
 		ImportedDefaultBinding,NamedImports
 */
 
-function transferSource(source, options) {
+function transferSource(source, options, lineHead) {
 	var s = removeComment(source).replace(/^import\s*/, "");	//remove 'import' and the following spaces
 
 	switch (s.charAt(0)) {
@@ -78,21 +78,21 @@ function transferSource(source, options) {
 			return s.replace(/^\*\s*as\s+(\S+)\s+from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
 				function (m, p1, p2) {
 					//NameSpaceImport
-					return formatSourceComment(source, options) +
+					return formatSourceComment(source, options, lineHead) +
 						"var " + p1 + "= require(" + p2 + ");";
 				});
 		case "{":	//import { export1 , export2 as alias2  } from "module-name";
 			return s.replace(/^\{([^\}]*)\}\s*from\s*([\'\"][^\'\"]+[\'\"])[\s;]*$/,
 				function (m, p1, p2) {
 					//NamedImports
-					return formatSourceComment(source, options) +
+					return formatSourceComment(source, options, lineHead) +
 						"var " + formatNamedImports(p1, null, p2, options) + ";";
 				});
 		case "\"":	//import "module-name";
 			return s.replace(/^([\'\"][^\'\"]+[\'\"])[\s;]*$/,
 				function (m, p1) {
 					//import ModuleSpecifier;
-					return formatSourceComment(source, options) +
+					return formatSourceComment(source, options, lineHead) +
 						"require(" + p1 + ");";
 				});
 		default:	//import defaultExport (,* as \w+)? (,{...})? from "module-name";
@@ -104,7 +104,7 @@ function transferSource(source, options) {
 
 					if (!p2 && !p3) {
 						//ImportedDefaultBinding
-						return formatSourceComment(source, options) +
+						return formatSourceComment(source, options, lineHead) +
 							"var " + p1 + "= require(" + p4 + ")" + (defaultKey ? ("." + defaultKey) : "") + ";";
 					}
 					else if (!p3) {
@@ -112,22 +112,22 @@ function transferSource(source, options) {
 						var nm = p2.match(/\S+$/)[0];
 
 						if (defaultKey) {
-							return formatSourceComment(source, options) +
+							return formatSourceComment(source, options, lineHead) +
 								"var " + nm + "= require(" + p4 + ")" + splitter + p1 + "= " + nm + "." + defaultKey + ";";
 						}
 						else {
-							return formatSourceComment(source, options) +
+							return formatSourceComment(source, options, lineHead) +
 								"var " + p1 + "= require(" + p4 + ")" + splitter + nm + "= " + p1 + ";";
 						}
 					}
 					else if (!p2) {
 						//ImportedDefaultBinding,NamedImports
 						if (defaultKey) {
-							return formatSourceComment(source, options) +
+							return formatSourceComment(source, options, lineHead) +
 								"var " + formatNamedImports("{" + defaultKey + " as " + p1 + ", " + p3.replace(/^[\s\{,]+/, ""), null, p4, options) + ";";
 						}
 						else {
-							return formatSourceComment(source, options) +
+							return formatSourceComment(source, options, lineHead) +
 								"var " + p1 + "= require(" + p4 + ")" + splitter + formatNamedImports(p3, p1, null, options) + ";";
 						}
 					}
@@ -138,6 +138,8 @@ function transferSource(source, options) {
 
 var regImport = /\bimport\b/;
 var defaultFalafelOptions = { sourceType: 'module', ecmaVersion: ECMA_VERSION };
+
+var regLineHead = /[\r\n]$/;
 
 //return boolean
 var fastCheck = function (source) {
@@ -156,7 +158,8 @@ var falafelCallback = function (source, options) {
 				if (options && options.debugInfo) { console.log("match line: " + itemSource); }
 
 				//console.log("clear: "+removeComment(node.source()));
-				var newSource = transferSource(itemSource, options);
+				var newSource = transferSource(itemSource, options,
+					node.start ? regLineHead.test(source.slice(node.start - 1, node.start)) : true);
 
 				if (newSource && itemSource !== newSource) {
 					//console.log("new  : "+newSource);

@@ -73,7 +73,6 @@ cmp('import defaultExport2,*as name2 from "module-name";',
 //import def111/*ccc*/from "module-name"/*as*/;
 var def111= require("module-name");     //comment as splitter
 
-
 //import def222 from "module-name";
 var def222= require("module-name");     ///bbb
 
@@ -82,7 +81,6 @@ var name= require("module-name");
 
 //import*as nameb from"module-name";
 var nameb= require("module-name");      //special spaces
-
 
 //import { export1 } from "module-name";
 var export1= require("module-name").export1;
@@ -144,7 +142,6 @@ import defaultExport from "module-name";
 */
 /*
 import defaultExport from "module-name";*/
-
 
 //template strings
 var s=`gfgsdfgsdf
