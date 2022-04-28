@@ -191,7 +191,7 @@ function transfer(source, options) {
 
 	if (cbo.final) resultSource = cbo.final(resultSource);
 
-	return resultSource;
+	return resultSource.toString();
 }
 
 //module

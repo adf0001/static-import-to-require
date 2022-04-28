@@ -25,7 +25,7 @@ module.exports = {
 					.falafelOptions
 						options passed to falafel, default { sourceType: 'module', ecmaVersion: 99 };
 			*/
-			var s = static_import_to_require(source).toString();
+			var s = static_import_to_require(source);
 			if (s === expect) return true;
 			console.error("compare fail, source: " + source);
 			console.log("expect: " + expect);
@@ -102,7 +102,7 @@ module.exports = {
 		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
 
 		function cmp(source, expect) {
-			var s = static_import_to_require(source, { defaultKey: "default" }).toString();
+			var s = static_import_to_require(source, { defaultKey: "default" });
 			if (s === expect) return true;
 			console.error("compare fail, source: " + source);
 			console.log("expect: " + expect);
@@ -132,7 +132,7 @@ module.exports = {
 		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
 
 		function cmp(source, expect) {
-			var s = static_import_to_require(source, { sourceComment: true }).toString();
+			var s = static_import_to_require(source, { sourceComment: true });
 			if (s === expect) return true;
 			console.error("compare fail, source: " + source);
 			console.log("expect: " + expect);
@@ -179,7 +179,7 @@ module.exports = {
 		//if (typeof window !==/=== "undefined") throw "disable for browser/nodejs";
 
 		function cmp(source, expect) {
-			var s = static_import_to_require(source, { singleLine: true }).toString();
+			var s = static_import_to_require(source, { singleLine: true });
 			if (s === expect) return true;
 			console.error("compare fail, source: " + source);
 			console.log("expect: " + expect);
@@ -278,7 +278,13 @@ module.exports = {
 			if (request.status === 200) txt = request.responseText;
 		}
 
+		//.fastCheck(source)		//return boolean
 		if (static_import_to_require.fastCheck(txt)) {
+
+			/*
+			.falafelCallback(source, options)
+			return callback object { node: function(node), final?: function(result) }
+			*/
 			var cbo = static_import_to_require.falafelCallback(txt,
 				{ debugInfo: true, sourceComment: false, defaultKey: "default" });
 
