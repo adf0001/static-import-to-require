@@ -48,7 +48,7 @@ function cmp(source, expect) {
 			.falafelOptions
 				options passed to falafel, default { sourceType: 'module', ecmaVersion: 99 };
 	*/
-	var s = static_import_to_require(source, { sourceComment: false }).toString();
+	var s = static_import_to_require(source, { sourceComment: false });
 
 	return (s === expect);
 }
