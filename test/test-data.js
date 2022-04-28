@@ -22,6 +22,8 @@ module.exports = {
 							such as "default" like that in babel, then the default export is `require("module").default`;
 					.singleLine
 						if set true, format multiple named-imports in single line;
+					.falafelOptions
+						options passed to falafel, default { sourceType: 'module', ecmaVersion: 99 };
 			*/
 			var s = static_import_to_require(source).toString();
 			if (s === expect) return true;
@@ -281,7 +283,7 @@ module.exports = {
 				{ debugInfo: true, sourceComment: false, defaultKey: "default" });
 
 			console.log("===========================");
-			var rsl = falafel(txt, static_import_to_require.falafelOptions,
+			var rsl = falafel(txt, static_import_to_require.defaultFalafelOptions,
 				function (node) {
 					cbo.node(node);
 				}

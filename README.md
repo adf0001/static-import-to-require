@@ -45,6 +45,8 @@ function cmp(source, expect) {
 					such as "default" like that in babel, then the default export is `require("module").default`;
 			.singleLine
 				if set true, format multiple named-imports in single line;
+			.falafelOptions
+				options passed to falafel, default { sourceType: 'module', ecmaVersion: 99 };
 	*/
 	var s = static_import_to_require(source, { sourceComment: false }).toString();
 

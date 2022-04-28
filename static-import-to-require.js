@@ -137,7 +137,7 @@ function transferSource(source, options) {
 }
 
 var regImport = /\bimport\b/;
-var falafelOptions = { sourceType: 'module', ecmaVersion: ECMA_VERSION };
+var defaultFalafelOptions = { sourceType: 'module', ecmaVersion: ECMA_VERSION };
 
 //return boolean
 var fastCheck = function (source) {
@@ -179,13 +179,15 @@ options:
 			such as "default" like that in babel, then the default export is `require("module").default`;
 	.singleLine
 		if set true, format multiple named-imports in single line;
+	.falafelOptions
+		options passed to falafel, default { sourceType: 'module', ecmaVersion: 99 };
 */
 function transfer(source, options) {
 	if (!fastCheck(source)) return source;
 
 	var cbo = falafelCallback(source, options);
 
-	var resultSource = falafel(source, falafelOptions, cbo.node);
+	var resultSource = falafel(source, (options && options.falafelOptions) || defaultFalafelOptions, cbo.node);
 
 	if (cbo.final) resultSource = cbo.final(resultSource);
 
@@ -198,4 +200,4 @@ module.exports = exports = transfer;
 
 exports.fastCheck = fastCheck;
 exports.falafelCallback = falafelCallback;
-exports.falafelOptions = Object.assign({}, falafelOptions);
+exports.defaultFalafelOptions = Object.assign({}, defaultFalafelOptions);
